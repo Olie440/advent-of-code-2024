@@ -18,14 +18,11 @@ function parseInput(input: string): [number[], number[]] {
 
 function solvePartOne(input: string): number {
   const [firstList, secondList] = parseInput(input).map(sortByValueAscending);
-  let result = 0;
 
-  for (const index of firstList.keys()) {
-    const difference = Math.abs(firstList[index] - secondList[index]);
-    result += difference;
-  }
-
-  return result;
+  return firstList
+    .keys()
+    .map((index) => Math.abs(firstList[index] - secondList[index]))
+    .reduce(sum);
 }
 
 function solvePartTwo(input: string): number {
@@ -38,8 +35,9 @@ function solvePartTwo(input: string): number {
   }
 
   return secondList
+    .values()
     .map((id) => id * (frequencyMap.get(id) ?? 0))
-    .reduce(sum, 0);
+    .reduce(sum);
 }
 
 const exampleInput = await Bun.file(`${__dirname}/example-input.txt`).text();
