@@ -16,35 +16,44 @@ function parseInput(input: string): CalibrationLine[] {
   });
 }
 
-function isCalibrationResultAchievable({
+interface SearchContext {
+  expectedResult: number;
+  values: number[];
+  currentIndex?: number;
+  previousValue?: number;
+  includeConcatenation?: boolean;
+}
+
+const isCalibrationResultAchievable = ({
   expectedResult,
   values,
-}: CalibrationLine): boolean {
-  return values
-    .reduce(generateAllPermutations, new Set([values[0]]))
-    .has(expectedResult);
-}
+  currentIndex = 1,
+  previousValue = values[0],
+  includeConcatenation = false,
+}: SearchContext): boolean => {
+  const currentValue = values[currentIndex];
+  const results = [previousValue + currentValue, previousValue * currentValue];
 
-let INCLUDE_CONCATENATION = false;
+  if (includeConcatenation) {
+    results.push(Number(`${previousValue}${currentValue}`));
+  }
 
-function generateAllPermutations(
-  previous: Set<number>,
-  current: number
-): Set<number> {
-  return new Set(
-    previous
-      .values()
-      .flatMap((result) => [
-        result + current,
-        result * current,
-        INCLUDE_CONCATENATION ? Number(`${result}${current}`) : NaN,
-      ])
+  if (currentIndex === values.length - 1) {
+    return results.includes(expectedResult);
+  }
+
+  return results.some((result) =>
+    isCalibrationResultAchievable({
+      expectedResult,
+      values,
+      currentIndex: currentIndex + 1,
+      previousValue: result,
+      includeConcatenation,
+    })
   );
-}
+};
 
 function solvePartOne(input: string): number {
-  INCLUDE_CONCATENATION = false;
-
   return parseInput(input)
     .filter(isCalibrationResultAchievable)
     .map((line) => line.expectedResult)
@@ -52,10 +61,14 @@ function solvePartOne(input: string): number {
 }
 
 function solvePartTwo(input: string): number {
-  INCLUDE_CONCATENATION = true;
-
   return parseInput(input)
-    .filter(isCalibrationResultAchievable)
+    .filter(({ expectedResult, values }) =>
+      isCalibrationResultAchievable({
+        expectedResult,
+        values,
+        includeConcatenation: true,
+      })
+    )
     .map((line) => line.expectedResult)
     .reduce(sum, 0);
 }
